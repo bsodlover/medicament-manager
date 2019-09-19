@@ -1,9 +1,8 @@
 from tkinter import *
-import tkinter
 import sqlite3
 import datetime
 from tkinter import messagebox
-client = "nom"
+import tkinter
 tk = Tk()
 namR = []
 data = []
@@ -13,6 +12,9 @@ select_data = []
 checkbox_id = []
 checkbox = []
 temp_data = []
+temp_patients = []
+original_data = []
+new_data = []
 #some global variables 
 columnNum=0
 i = 0
@@ -34,23 +36,34 @@ def create_row():
         temp_data.append(e)
     namR = [] 
 
-def get_rows():
+def push_changes():
+    i = 0
+    dbRowNum = 0
+    for ii in data:
+        new_data.append(ii.get())
+    print(new_data[1])
+    print(original_data[1])
+    for ii in original_data:
+        if ii != new_data[i]:
+            print(new_data[i])
+            i = i + 1
+            
+
+def get_rows(patient):
     global namR
     global rowNum
     global i 
     i = 0
     conn = sqlite3.connect('db.db')
-    print("Opened database successfully");
-    params = (client,)
+    params = (patient,)
     cursor = conn.execute("SELECT * FROM medicaments where mPatientName = ? ",params)
     for row in cursor:
         checkbox_id.append(row[0])
         dataRow = [row[9],row[8],row[7],row[6],row[5],row[4]]
-        print(dataRow)
+        original_data.extend((row[4],row[5],row[6],row[7],row[8],row[9]))
         select_data.append(dataRow)
         create_row()
         for ii in dataRow:
-            print(i)
             tempItem = temp_data.pop(-1)
             tempItem.insert(0,ii)
             i = i + 1
@@ -62,16 +75,37 @@ def destroy_row():
     for ii in range(0,4):
         entry = data.pop(-1)
         entry.destroy()
-
-top_frame = tkinter.Frame(tk).grid(row=0, column=0)
-btnText = ["Afegir medicament","Treure medicament","Extra","TEST"]
-labelText = ["Nom medicament","Dosi","Pauta","Data inici","Data final","Observacions"]
-tkinter.Button(top_frame, text = btnText[0], fg = "green", command = create_row).grid(row=0, column=0)
-tkinter.Button(top_frame, text = btnText[1], fg = "green", command = destroy_row).grid(row=0, column=1)
-tkinter.Button(top_frame, text = btnText[2], fg = "green", command = create_row).grid(row=0, column=2)
-tkinter.Button(top_frame, text = btnText[3], fg = "green").grid(row=0, column=3)
-for ii in range(0,6):
-    Label(top_frame, width=20, height=4, bg="green", text=labelText[ii]).grid(row=2, column=ii)
-rowNum = rowNum + 1
-get_rows()
+def load_client(patient):
+    global popup
+    popup.destroy()
+    global rowNum
+    global tkinter
+    top_frame = tkinter.Frame(tk).grid(row=0, column=0)
+    btnText = ["Afegir medicament","Treure medicament","Extra","TEST"]
+    labelText = ["Nom medicament","Dosi","Pauta","Data inici","Data final","Observacions"]
+    tkinter.Button(top_frame, text = btnText[0], fg = "green", command = create_row).grid(row=0, column=0)
+    tkinter.Button(top_frame, text = btnText[1], fg = "green", command = destroy_row).grid(row=0, column=1)
+    tkinter.Button(top_frame, text = btnText[2], fg = "green", command = push_changes).grid(row=0, column=2)
+    tkinter.Button(top_frame, text = btnText[3], fg = "green").grid(row=0, column=3)
+    for ii in range(0,6):
+        Label(top_frame, width=20, height=4, bg="green", text=labelText[ii]).grid(row=2, column=ii)
+    rowNum = rowNum + 1
+    get_rows(patient)
+def popup():
+    global popup
+    def popupsearch():
+        for item in temp_patients:
+            item.destroy()
+        conn = sqlite3.connect('db.db')
+        params = (SearchName.get(),)
+        cursor = conn.execute("SELECT * FROM patient where pName = ? ",params)
+        for row in cursor:
+            temp_patients.append(Button(popup, width=30, height=2, bg="yellow",text=row[2]+","+row[3]+","+row[4]+","+row[5],command= lambda: load_client(row[2])))
+            temp_patients[-1].pack()
+    popup = Toplevel()
+    Label(popup, width=20, height=4, bg="green", text="Nom client").pack(side="top")
+    SearchName =  Entry(popup, width=20)
+    SearchName.pack(side="top")
+    tkinter.Button(popup,text = "Buscar clients",command = popupsearch).pack()
+popup()
 tk.mainloop()
