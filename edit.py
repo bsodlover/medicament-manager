@@ -9,7 +9,7 @@ data = []
 rowNum = 2 #we define the row to start creating the grids
 db_data = []
 select_data = []
-checkbox_id = []
+m_id = []
 checkbox = []
 temp_data = []
 temp_patients = []
@@ -37,6 +37,7 @@ def create_row():
     namR = [] 
 
 def push_changes():
+    new_data = []
     i = 0
     dbRowNum = 0
     for ii in data:
@@ -45,9 +46,22 @@ def push_changes():
     print(original_data[1])
     for ii in original_data:
         if ii != new_data[i]:
-            print(new_data[i])
-            i = i + 1
-            
+            change = 1
+        i = i + 1
+        if i == 6:
+            if change == 1:
+                conn = sqlite3.connect('db.db')
+                print(m_id)
+                params = (new_data[0],new_data[1],new_data[2],new_data[3],new_data[4],new_data[5],str(m_id[dbRowNum]))
+                conn.execute('UPDATE medicaments SET mName = ?, mDosi = ?, mPauta = ?, mDataInici = ?, mDataFinal = ?, mObservacions = ? WHERE mId = ? ',params)
+                conn.commit()
+                for ii in range(0,6):
+                    new_data.pop()
+                    original_data.pop()
+                    change = 0
+            dbRowNum = dbRowNum + 1
+            i = 0
+
 
 def get_rows(patient):
     global namR
@@ -58,7 +72,7 @@ def get_rows(patient):
     params = (patient,)
     cursor = conn.execute("SELECT * FROM medicaments where mPatientName = ? ",params)
     for row in cursor:
-        checkbox_id.append(row[0])
+        m_id.append(str(row[0]))
         dataRow = [row[9],row[8],row[7],row[6],row[5],row[4]]
         original_data.extend((row[4],row[5],row[6],row[7],row[8],row[9]))
         select_data.append(dataRow)
